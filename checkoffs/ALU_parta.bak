@@ -1,0 +1,30 @@
+.include"/home/dominic/Documents/school/50002/nominal.jsim"
+.include"/home/dominic/Documents/school/50002/stdcell.jsim"
+.include"/home/dominic/Documents/school/50002/lab3adder.jsim"
+
+.subckt FA a b ci s co
+X_first_Sum a b 5 xor2
+X_Sum 5 ci s xor2
+XfirstNand a b 1 nand2
+XsecondNand a ci 2 nand2
+XthirdNand b ci 3 nand2
+XfinalNand 1 2 3 co nand3
+.ends
+
+.subckt zeroFlag a[31:0] output
+// take 32 inputs, use 8 or4 gates to reduce them to 8 outputs
+X_firstLayer a[0:7] a[8:15] a[16:23] a[24:31] z[0:7] or4
+// have 8 outputs, reduce to 2 by using 2 or4 gates
+X_secondLayer z[0:1] z[2:3] z[4:5] z[6:7] w[0:1] or4
+X_finalValue w0 w1 output nor2
+.ends
+
+.subckt adder32 ALUFN[0] A[31:0] B[31:0] s[31:0] z v n
+Xxor_32 B[31:0] ALUFN[0]#32 XB[31:0] xor2
+Xstart A[0] B[0] ALUFN[0] s[0] cout[0] FA
+Xmiddle A[1:30] B[1:30] cout[0:29] s[1:30] cout[1:30] FA
+Xlast A[31] B[31] cout[30] s[31] v FA
+
+X_ZeroFlag s[31:0] z zeroFlag
+Xgnd n constant0
+.ends
