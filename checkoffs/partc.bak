@@ -1,0 +1,9 @@
+* dc analysis to create VTC
+Xtest vin vin vout nand2
+Vin vin 0 0v
+Vol vol 0 0.3v
+Voh voh 0 3v
+// make measurements easier!
+// see part (D)
+.dc Vin 0 3.3 .005
+.plot vin vout voh vol

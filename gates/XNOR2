@@ -1,0 +1,13 @@
+.include "/home/dominic/Documents/school/50002nominal.jsim"
+.include "/home/dominic/Documents/school/50002/gates/NAND2"
+
+.subckt xnor2 A B Z
+Xnand01 A B Z nand2
+MPU1 Z 1 vdd vdd PENH sw=8 sl=1
+MPU2 2 B vdd vdd PENH sw=8 sl=1
+MPU3 Z A 2 vdd PENH sw=8 sl=1
+
+MPD1 Z 1 3 0 NENH sw=8 sl=1
+MPD2 3 B 0 0 NENH sw=8 sl=1
+MPD3 3 A 0 0 NENH sw=8 sl=1
+.ends

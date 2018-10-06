@@ -1,0 +1,7 @@
+* circuit for Lab#1, parts C thru F
+.include "/home/dominic/Documents/school/50002/nominal.jsim"
+
+* 2-input NAND: inputs are A and B, output is Z
+.subckt nand2 a b z
+MPD1 z a 1 0 NENH sw=8 sl=1
+MPD2 1 b 0 0 NENH sw=8 sl=1

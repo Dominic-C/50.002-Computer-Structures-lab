@@ -1,0 +1,79 @@
+.include "/home/dominic/Documents/school/50002/nominal.jsim"
+*.include "/home/dominic/Documents/school/50002/lab2checkoff.jsim"
+.include "/home/dominic/Documents/school/50002/8clocks.jsim"
+
+* NAND gate
+.subckt nand2 A B Z
+MPU1 Z A vdd vdd PENH sw=8 sl=1
+MPU2 Z B vdd vdd PENH sw=8 sl=1
+
+MPD1 Z A 1 0 NENH sw=8 sl=1
+MPD2 1 B 0 0 NENH sw=8 sl=1
+.ends
+
+* NOR gate
+.subckt nor2 A B Z
+MPU1 1 A vdd vdd PENH sw=8 sl=1
+MPU2 Z B 1 vdd PENH sw=8 sl=1
+
+MPD1 Z A 0 0 NENH sw=8 sl=1
+MPD2 Z B 0 0 NENH sw=8 sl=1
+.ends
+
+
+* XOR gate
+.subckt xor2 A B Z
+X_nor01 A B 4 nor2
+MPU1 1 A vdd vdd PENH sw=4 sl=1
+MPU2 Z 4 1 vdd PENH sw=4 sl=1
+MPU3 1 B vdd vdd PENH sw=4 sl=1
+
+MPD1 Z A 2 0 NENH sw=2 sl=1
+MPD2 2 B 0 0 NENH sw=2 sl=1
+MPD3 Z 4 0 0 NENH sw=2 sl=1
+.ends
+
+
+* XNOR gate
+.subckt xnor2 A B Z
+Xnand01 A B 1 nand2
+MPU1 Z 1 vdd vdd PENH sw=8 sl=1
+MPU2 2 B vdd vdd PENH sw=8 sl=1
+MPU3 Z A 2 vdd PENH sw=8 sl=1
+
+MPD1 Z 1 3 0 NENH sw=8 sl=1
+MPD2 3 B 0 0 NENH sw=8 sl=1
+MPD3 3 A 0 0 NENH sw=8 sl=1
+.ends
+
+.subckt nand3 A B C Z
+MPU1 Z A vdd vdd PENH sw=8 sl=1
+MPU2 Z B vdd vdd PENH sw=8 sl=1
+MPU3 Z C vdd vdd PENH sw=8 sl=1
+
+MPD1 Z A 1 0 NENH sw=8 sl=1
+MPD2 1 B 2 0 NENH sw=8 sl=1
+MPD3 2 C 0 0 NENH sw=8 sl=1
+.ends
+
+.subckt FA a b ci s co
+X_first_Sum a b 5 xor2
+X_Sum 5 ci s xor2
+XfirstNand a b 1 nand2
+XsecondNand a ci 2 nand2
+XthirdNand b ci 3 nand2
+XfinalNand 1 2 3 co nand3
+.ends
+
+.subckt ADDER4 a3 a2 a1 a0 b3 b2 b1 b0 s4 s3 s2 s1 s0
+Xbit0 a0 b0 0 s0 c0 FA
+Xbit1 a1 b1 c0 s1 c1 FA
+Xbit2 a2 b2 c1 s2 c2 FA
+Xbit3 a3 b3 c2 s3 s4 FA
+.ends
+
+Xtest2 clk1 clk2 z xor2
+.tran 20ns
+.plot clk1
+.plot clk2
+.plot z

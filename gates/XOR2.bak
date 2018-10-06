@@ -1,0 +1,20 @@
+*.include "/home/dominic/Documents/school/50002/nominal.jsim" // already included in the NOR2
+.include "/home/dominic/Documents/school/50002/gates/NOR2"
+*.include "/home/dominic/Documents/school/50002/8clocks.jsim"
+
+.subckt xor2 A B Z
+X_nor01 A B 4 nor2
+MPU1 1 A vdd vdd PENH sw=4 sl=1
+MPU2 Z 4 1 vdd PENH sw=4 sl=1
+MPU3 1 B vdd vdd PENH sw=4 sl=1
+
+MPD1 Z A 2 0 NENH sw=2 sl=1
+MPD2 2 B 0 0 NENH sw=2 sl=1
+MPD3 Z 4 0 0 NENH sw=2 sl=1
+.ends
+
+Xtest clk1 clk2 z xor2
+.tran 20ns
+.plot clk1
+.plot clk2
+.plot z

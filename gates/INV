@@ -1,0 +1,12 @@
+.include "/home/dominic/Documents/school/50002/nominal.jsim"
+.include "/home/dominic/Documents/school/50002/8clocks.jsim"
+
+.subckt inv A Z
+MPU1 Z A vdd vdd PENH sw=8 sl=1
+MPD1 Z A 0 0 NENH sw=8 sl=1
+.ends
+
+Xtest clk2 z inv
+.tran 20ns
+.plot clk2
+.plot z

@@ -1,0 +1,16 @@
+.include "/home/dominic/Documents/school/50002/nominal.jsim"
+.include "/home/dominic/Documents/school/50002/8clocks.jsim"
+
+.subckt nor2 A B Z
+MPU1 1 A vdd vdd PENH sw=8 sl=1
+MPU2 Z B 1 vdd PENH sw=8 sl=1
+
+MPD1 Z A 0 0 NENH sw=8 sl=1
+MPD2 Z B 0 0 NENH sw=8 sl=1
+.ends
+
+*Xtest clk1 clk2 z nor2
+.tran 20ns // transient analysis
+.plot clk1
+.plot clk2
+.plot z

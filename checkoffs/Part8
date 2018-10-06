@@ -1,0 +1,14 @@
+.include "/home/dominic/Documents/school/50002/nominal.jsim"
+.include "/home/dominic/Documents/school/50002/lab1checkoff.jsim"
+
+.subckt F A B C Z
+MPU1 2 A 1 vdd PENH sl=8 sw=1
+MPU2 2 B 1 vdd PENH sl=8 sw=1
+MPU3 1 C vdd vdd PENH sl=8 sw=1
+MPU4 Z 2 vdd vdd PENH sl=8 sw=1
+
+MPD1 2 A 3 0 NENH sl=8 sw=1
+MPD2 3 B 0 0 NENH sl=8 sw=1
+MPD3 2 C 0 0 NENH sl=8 sw=1
+MPD4 Z 2 0 0 NENH sl=8 sw=1
+.ends
