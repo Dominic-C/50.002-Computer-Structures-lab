@@ -2,7 +2,9 @@
 .include"/home/dominic/Documents/school/50002/stdcell.jsim"
 *.include"/home/dominic/Documents/school/50002/lab3adder.jsim"
 *.include"/home/dominic/Documents/school/50002/lab3compare.jsim"
-.include"/home/dominic/Documents/school/50002/lab3boolean.jsim"
+*.include"/home/dominic/Documents/school/50002/lab3boolean.jsim"
+*.include"/home/dominic/Documents/school/50002/lab3shifter.jsim"
+.include"/home/dominic/Documents/school/50002/lab3checkoff_6.jsim"
 ******************* 1 bit ADDER *************************
 .subckt FA a b ci s co
 X_first_Sum a b 5 xor2
@@ -60,4 +62,57 @@ Xcmp ALUFN[2] ALUFN[1] 0 cmplt z cmplteq cmp[0] mux4
 ******************* 32 bit boolean ********************
 .subckt boole32 ALUFN[3:0] A[31:0] B[31:0] boole[31:0]
 X_bool A[31:0] B[31:0] ALUFN[0]#32 ALUFN[1]#32 ALUFN[2]#32 ALUFN[3]#32 boole[31:0] mux4
+.ends
+
+******************* 32 bit shifter **********************
+.subckt shift32 ALUFN[1:0] A[31:0] B[4:0] shift[31:0]
+
+// shift left
+X_leftshiftA B[4]#16 A[31:16] A[15:0] W[31:16] mux2
+X_leftshiftA_gnd B[4]#16 A[15:0] 0#16 W[15:0] mux2
+
+X_leftshiftW B[3]#24 W[31:8] W[23:0] X[31:8] mux2
+X_leftshiftW_gnd B[3]#8 W[7:0] 0#8 X[7:0] mux2
+
+X_leftshiftX B[2]#28 X[31:4] X[27:0] Y[31:4] mux2
+X_leftshiftX_gnd B[2]#4 X[3:0] 0#4 Y[3:0] mux2
+
+X_leftshiftY B[1]#30 Y[31:2] Y[29:0] Z[31:2] mux2
+X_leftshiftY_gnd B[1]#2 Y[1:0] 0#2 Z[1:0] mux2
+
+X_leftshiftZ B[0]#31 Z[31:1] Z[30:0] SL[31:1] mux2
+X_leftshiftZ_gnd B[0] Z[0] 0 SL[0] mux2
+
+// shift right and shift right with arithmetic
+* NOTE: in my implementation, i try to make SHR and SHA in the same chunk of code
+* the way attempt to do it is by using a mux2 to switch between gnd and A31 when ALUFN[1] is 0 or 1
+
+X_arithmeticSelector ALUFN[1] 0 A[31] AS mux2 // Arithmetic Selector, AS is a made up name for a node
+
+X_rightshiftA_AS B[4]#16 A[31:16] AS#16 WR[31:16] mux2
+X_rightshiftA B[4]#16 A[15:0] A[31:16] WR[15:0] mux2
+
+X_rightshiftWR_AS B[3]#8 WR[31:24] AS#8 XR[31:24] mux2
+X_rightshiftWR B[3]#24 WR[23:0] WR[31:8] XR[23:0] mux2
+
+X_rightshiftXR_AS B[2]#4 XR[31:28] AS#4 YR[31:28] mux2
+X_rightshiftXR B[2]#28 XR[27:0] XR[31:4] YR[27:0] mux2
+
+X_rightshiftYR_AS B[1]#2 YR[31:30] AS#2 ZR[31:30] mux2
+X_rightshiftYR B[1]#30 YR[29:0] YR[31:2] ZR[29:0] mux2
+
+X_rightshiftZR_AS B[0] ZR[31] AS SR[31] mux2
+X_rightshiftZR B[0]#31 ZR[30:0] ZR[31:1] SR[30:0] mux2
+
+X_shifter ALUFN[0]#32 SL[31:0] SR[31:0] shift[31:0] mux2 
+.ends
+
+**************************** 32 bit ALU ****************************
+.subckt alu ALUFN[5:0] A[31:0] B[31:0] alu[31:0] z v n
+X_32bitAdder ALUFN[0] A[31:0] B[31:0] sum[31:0] z v n adder32
+X_32bitBoolean ALUFN[3:0] A[31:0] B[31:0] boole[31:0] boole32
+X_32bitShifter ALUFN[1:0] A[31:0] B[4:0] shift[31:0] shift32
+X_32bitCompare ALUFN[2:1] z v n cmp[31:0] compare32
+
+X_32bitALU ALUFN[5]#32 ALUFN[4]#32 sum[31:0] shift[31:0] boole[31:0] cmp[31:0] alu[31:0] mux4
 .ends
