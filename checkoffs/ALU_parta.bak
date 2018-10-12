@@ -109,13 +109,12 @@ X_rightshiftZR B[0]#31 ZR[30:0] ZR[31:1] SR[30:0] mux2
 X_shifter ALUFN[0]#32 SL[31:0] SR[31:0] shift[31:0] mux2 
 .ends
 
-
-
-
+****************** 32 bit multiplier *****************************
 .subckt multiply32 A[31:0] B[31:0] P[31:0]
 X_and1 A[31:0] B[0]#32 Z1Z[31:0] and2
 .connect Z1Z[0] P[0]
 
+// after this line, code generated using a for loop in python
 X_and2 A[30:0] B[1]#31 Z2Z[30:0] and2
 X_FA_B1_F Z1Z[1] Z2Z[0] 0 P[1] C1out[0] FA
 X_FA_B1_L Z1Z[31:2] Z2Z[30:1] C1out[29:0] Z3Z[30:1] C1out[30:1] FA
