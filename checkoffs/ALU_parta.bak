@@ -85,7 +85,7 @@ X_leftshiftZ_gnd B[0] Z[0] 0 SL[0] mux2
 
 // shift right and shift right with arithmetic
 * NOTE: in my implementation, i try to make SHR and SHA in the same chunk of code
-* the way attempt to do it is by using a mux2 to switch between gnd and A31 when ALUFN[1] is 0 or 1
+* USed a mux2 to switch between gnd and A31 when ALUFN[1] is 0 or 1
 
 X_arithmeticSelector ALUFN[1] 0 A[31] AS mux2 // Arithmetic Selector, AS is a made up name for a node
 
@@ -115,4 +115,133 @@ X_32bitShifter ALUFN[1:0] A[31:0] B[4:0] shift[31:0] shift32
 X_32bitCompare ALUFN[2:1] z v n cmp[31:0] compare32
 
 X_32bitALU ALUFN[5]#32 ALUFN[4]#32 sum[31:0] shift[31:0] boole[31:0] cmp[31:0] alu[31:0] mux4
+.ends
+
+
+.subckt multiply32 A[31:0] B[31:0] P[31:0]
+X_firstlayer A[31:0] B[0]#32 Z1[31:0] and2
+.connect Z[0] P[0]
+
+X_and1 A[30:0] B[1]#31 Z2[30:0] and2
+X_FA_1 Z1[1] Z2[0] 0 P[1] CO1[0] FA
+X_FA_1_rest Z1[31:2] Z2[30:1] CO1[29:0] Z3[30:1] CO1[30:1] FA
+
+X_and2 A[29:0] B[2]#30 Z4[29:0] and2
+X_FA_2 Z3[1] Z4[0] 0 P[2] CO2[0] FA
+X_FA_2_rest Z3[30:2] Z4[29:1] CO2[28:0] Z5[29:1] CO2[29:1] FA
+
+X_and3 A[28:0] B[3]#29 Z6[28:0] and2
+X_FA_3 Z5[1] Z6[0] 0 P[3] CO3[0] FA
+X_FA_3_rest Z5[29:2] Z6[28:1] CO3[27:0] Z7[28:1] CO3[28:1] FA
+
+X_and4 A[27:0] B[4]#28 Z8[27:0] and2
+X_FA_4 Z7[1] Z8[0] 0 P[4] CO4[0] FA
+X_FA_4_rest Z7[28:2] Z8[27:1] CO4[26:0] Z9[27:1] CO4[27:1] FA
+
+X_and5 A[26:0] B[5]#27 Z10[26:0] and2
+X_FA_5 Z9[1] Z10[0] 0 P[5] CO5[0] FA
+X_FA_5_rest Z9[27:2] Z10[26:1] CO5[25:0] Z11[26:1] CO5[26:1] FA
+
+X_and6 A[25:0] B[6]#26 Z12[25:0] and2
+X_FA_6 Z11[1] Z12[0] 0 P[6] CO6[0] FA
+X_FA_6_rest Z11[26:2] Z12[25:1] CO6[24:0] Z13[25:1] CO6[25:1] FA
+
+X_and7 A[24:0] B[7]#25 Z14[24:0] and2
+X_FA_7 Z13[1] Z14[0] 0 P[7] CO7[0] FA
+X_FA_7_rest Z13[25:2] Z14[24:1] CO7[23:0] Z15[24:1] CO7[24:1] FA
+
+X_and8 A[23:0] B[8]#24 Z16[23:0] and2
+X_FA_8 Z15[1] Z16[0] 0 P[8] CO8[0] FA
+X_FA_8_rest Z15[24:2] Z16[23:1] CO8[22:0] Z17[23:1] CO8[23:1] FA
+
+X_and9 A[22:0] B[9]#23 Z18[22:0] and2
+X_FA_9 Z17[1] Z18[0] 0 P[9] CO9[0] FA
+X_FA_9_rest Z17[23:2] Z18[22:1] CO9[21:0] Z19[22:1] CO9[22:1] FA
+
+X_and10 A[21:0] B[10]#22 Z20[21:0] and2
+X_FA_10 Z19[1] Z20[0] 0 P[10] CO10[0] FA
+X_FA_10_rest Z19[22:2] Z20[21:1] CO10[20:0] Z21[21:1] CO10[21:1] FA
+
+X_and11 A[20:0] B[11]#21 Z22[20:0] and2
+X_FA_11 Z21[1] Z22[0] 0 P[11] CO11[0] FA
+X_FA_11_rest Z21[21:2] Z22[20:1] CO11[19:0] Z23[20:1] CO11[20:1] FA
+
+X_and12 A[19:0] B[12]#20 Z24[19:0] and2
+X_FA_12 Z23[1] Z24[0] 0 P[12] CO12[0] FA
+X_FA_12_rest Z23[20:2] Z24[19:1] CO12[18:0] Z25[19:1] CO12[19:1] FA
+
+X_and13 A[18:0] B[13]#19 Z26[18:0] and2
+X_FA_13 Z25[1] Z26[0] 0 P[13] CO13[0] FA
+X_FA_13_rest Z25[19:2] Z26[18:1] CO13[17:0] Z27[18:1] CO13[18:1] FA
+
+X_and14 A[17:0] B[14]#18 Z28[17:0] and2
+X_FA_14 Z27[1] Z28[0] 0 P[14] CO14[0] FA
+X_FA_14_rest Z27[18:2] Z28[17:1] CO14[16:0] Z29[17:1] CO14[17:1] FA
+
+X_and15 A[16:0] B[15]#17 Z30[16:0] and2
+X_FA_15 Z29[1] Z30[0] 0 P[15] CO15[0] FA
+X_FA_15_rest Z29[17:2] Z30[16:1] CO15[15:0] Z31[16:1] CO15[16:1] FA
+
+X_and16 A[15:0] B[16]#16 Z32[15:0] and2
+X_FA_16 Z31[1] Z32[0] 0 P[16] CO16[0] FA
+X_FA_16_rest Z31[16:2] Z32[15:1] CO16[14:0] Z33[15:1] CO16[15:1] FA
+
+X_and17 A[14:0] B[17]#15 Z34[14:0] and2
+X_FA_17 Z33[1] Z34[0] 0 P[17] CO17[0] FA
+X_FA_17_rest Z33[15:2] Z34[14:1] CO17[13:0] Z35[14:1] CO17[14:1] FA
+
+X_and18 A[13:0] B[18]#14 Z36[13:0] and2
+X_FA_18 Z35[1] Z36[0] 0 P[18] CO18[0] FA
+X_FA_18_rest Z35[14:2] Z36[13:1] CO18[12:0] Z37[13:1] CO18[13:1] FA
+
+X_and19 A[12:0] B[19]#13 Z38[12:0] and2
+X_FA_19 Z37[1] Z38[0] 0 P[19] CO19[0] FA
+X_FA_19_rest Z37[13:2] Z38[12:1] CO19[11:0] Z39[12:1] CO19[12:1] FA
+
+X_and20 A[11:0] B[20]#12 Z40[11:0] and2
+X_FA_20 Z39[1] Z40[0] 0 P[20] CO20[0] FA
+X_FA_20_rest Z39[12:2] Z40[11:1] CO20[10:0] Z41[11:1] CO20[11:1] FA
+
+X_and21 A[10:0] B[21]#11 Z42[10:0] and2
+X_FA_21 Z41[1] Z42[0] 0 P[21] CO21[0] FA
+X_FA_21_rest Z41[11:2] Z42[10:1] CO21[9:0] Z43[10:1] CO21[10:1] FA
+
+X_and22 A[9:0] B[22]#10 Z44[9:0] and2
+X_FA_22 Z43[1] Z44[0] 0 P[22] CO22[0] FA
+X_FA_22_rest Z43[10:2] Z44[9:1] CO22[8:0] Z45[9:1] CO22[9:1] FA
+
+X_and23 A[8:0] B[23]#9 Z46[8:0] and2
+X_FA_23 Z45[1] Z46[0] 0 P[23] CO23[0] FA
+X_FA_23_rest Z45[9:2] Z46[8:1] CO23[7:0] Z47[8:1] CO23[8:1] FA
+
+X_and24 A[7:0] B[24]#8 Z48[7:0] and2
+X_FA_24 Z47[1] Z48[0] 0 P[24] CO24[0] FA
+X_FA_24_rest Z47[8:2] Z48[7:1] CO24[6:0] Z49[7:1] CO24[7:1] FA
+
+X_and25 A[6:0] B[25]#7 Z50[6:0] and2
+X_FA_25 Z49[1] Z50[0] 0 P[25] CO25[0] FA
+X_FA_25_rest Z49[7:2] Z50[6:1] CO25[5:0] Z51[6:1] CO25[6:1] FA
+
+X_and26 A[5:0] B[26]#6 Z52[5:0] and2
+X_FA_26 Z51[1] Z52[0] 0 P[26] CO26[0] FA
+X_FA_26_rest Z51[6:2] Z52[5:1] CO26[4:0] Z53[5:1] CO26[5:1] FA
+
+X_and27 A[4:0] B[27]#5 Z54[4:0] and2
+X_FA_27 Z53[1] Z54[0] 0 P[27] CO27[0] FA
+X_FA_27_rest Z53[5:2] Z54[4:1] CO27[3:0] Z55[4:1] CO27[4:1] FA
+
+X_and28 A[3:0] B[28]#4 Z56[3:0] and2
+X_FA_28 Z55[1] Z56[0] 0 P[28] CO28[0] FA
+X_FA_28_rest Z55[4:2] Z56[3:1] CO28[2:0] Z57[3:1] CO28[3:1] FA
+
+X_and29 A[2:0] B[29]#3 Z58[2:0] and2
+X_FA_29 Z57[1] Z58[0] 0 P[29] CO29[0] FA
+X_FA_29_rest Z57[3:2] Z58[2:1] CO29[1:0] Z59[2:1] CO29[2:1] FA
+
+X_and30 A[1:0] B[30]#2 Z60[1:0] and2
+X_FA_30 Z59[1] Z60[0] 0 P[30] CO30[0] FA
+X_FA_30_rest Z59[2:2] Z60[1:1] CO30[0:0] Z61[1:1] CO30[1:1] FA
+
+X_and31 A[0] B[31] Z62[0] and2
+X_FA_31 Z61[1] Z62[0] 0 P[31] CO31[0] FA
 .ends
