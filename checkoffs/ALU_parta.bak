@@ -247,7 +247,9 @@ X_32bitAdder ALUFN[0] A[31:0] B[31:0] sum[31:0] z v n adder32
 X_32bitBoolean ALUFN[3:0] A[31:0] B[31:0] boole[31:0] boole32
 X_32bitShifter ALUFN[1:0] A[31:0] B[4:0] shift[31:0] shift32
 X_32bitCompare ALUFN[2:1] z v n cmp[31:0] compare32
+X_32bitMultiply A[31:0] B[31:0] mul[31:0] multiply32
 
-X_32bitALU ALUFN[5]#32 ALUFN[4]#32 sum[31:0] shift[31:0] boole[31:0] cmp[31:0] alu[31:0] mux4
-X_32bitMultiply A[31:0] B[31:0] alu[31:0] multiply32
+X_multiplyOrAdd ALUFN[1]#32 sum[31:0] mul[31:0] sumOrMul[31:0] mux2
+X_32bitALU ALUFN[5]#32 ALUFN[4]#32 sumOrMul[31:0] shift[31:0] boole[31:0] cmp[31:0] alu[31:0] mux4
+
 .ends
