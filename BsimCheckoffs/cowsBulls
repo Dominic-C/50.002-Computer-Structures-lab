@@ -1,0 +1,117 @@
+.include /home/dominic/Documents/school/50002/beta.uasm
+.include /home/dominic/Documents/school/50002/lab5checkoff.uasm
+
+
+count_bull_cows:	| your subroutine must have this name
+	PUSH(LP)	| standard subroutine entry sequence
+	PUSH(BP)
+	MOVE(SP, BP)
+
+	PUSH(R1) | a
+	PUSH(R2) | b
+	PUSH(R3) | bulls
+	PUSH(R4) | cows
+	PUSH(R5) | i
+	PUSH(R6) | j
+	PUSH(R7) | btemp
+	PUSH(R8) | atry
+	PUSH(R9) | btry
+	PUSH(R10) | mask
+	PUSH(R11) | temp reg for check1
+	PUSH(R12) | temp reg for a & mask
+	PUSH(R13) | temp reg for b & mask
+	PUSH(R14) | temp reg for inner if statement
+
+	LD(BP,-12,R1) | arg a into a
+	LD(BP,-16,R2) | arg b into b
+
+	CMOVE(0, R3) | bulls = 0
+	CMOVE(0xF,R10) | mask = 0xF
+	CMOVE(0, R5) | i = 0
+	BR(check1)
+
+body1:
+	AND(R1,R10,R12)	| a & mask store to R12
+	AND(R2,R10,R13)	| b & mask store to R13
+	CMPEQ(R12,R13,R13) | (a & mask) == (b & mask)
+	BF(R13,endcheck,R31) | branch if if statement is not true
+	
+	ADDC(R3,1,R3) | bulls = bulls +1
+	OR(R1,R10,R1) | a = a | mask
+	OR(R2,R10,R2) | b = b | mask
+		
+endcheck:
+	SHLC(R10,4,R10)	| mask = mask << 4
+	ADDC(R5, 1, R5) | i++
+
+
+check1:
+	CMPLTC(R5, 4, R11) | check if i < 4
+	BT(R11, body1, R31) | if i < 4 continue for loop
+
+	CMOVE(0,R4) | cows = 0 | start of second for loop
+	CMOVE(0,R5) | initialize i to 0 for next for loop. Note: CMOVE overwrites the register
+	BR(checkOuter)
+
+body2:
+	ANDC(R1,0xF,R8) | atry = a & 0xF
+	SRAC(R1,4,R1) | a = a >> 4
+	CMPEQC(R8,0xF,R12) | atry == 0xF
+	BT(R12,endcheck2) | if atry != 0xF, continue. but if atry == 0xF, branch to endif2
+	MOVE(R2,R7) | btemp = b
+	CMOVE(0xF,R10) | mask = 0xF
+
+	CMOVE(0,R6) | j = 0
+	BR(checkInner)
+	
+body3:	
+	ANDC(R7,0xF,R9) | btry = btemp & 0xF
+	SRAC(R7,4,R7) | btemp = btemp >> 4
+	
+	CMPEQ(R8,R9,R14) | atry == btry
+	BF(R14,endcheck3,R31)
+	ADDC(R4,1,R4) | cows = cows + 1
+	OR(R2,R10,R2) | b = b | mask
+	BR(endcheck2) | endcheck 2?
+		
+
+endcheck3:
+	SHLC(R10,4,R10) | mask = mask << 4	
+	ADDC(R6,1,R6) | j++
+
+checkInner:
+	CMPLTC(R6,4,R13) | for j < 4
+	BT(R13,body3,R31)
+
+endcheck2:
+	ADDC(R5,1,R5) | i++
+
+checkOuter:
+	CMPLTC(R5, 4, R11)
+	BT(R11,body2,R31)
+
+	SHLC(R3,4,R3) | bulls = bulls << 4
+	ADD(R3,R4,R0) | store bulls << 4 + cows into R0 for return
+
+	POP(R14)
+	POP(R13)
+	POP(R12)	
+	POP(R11)
+	POP(R10) |
+	POP(R9) |
+	POP(R8)	| 
+	POP(R7)	| 
+	POP(R6)	| 
+	POP(R5)	|
+	POP(R4)	| 
+	POP(R3)	|
+	POP(R2)	|
+	POP(R1)	|   
+
+	MOVE(BP,SP)	| standard subroutine exit sequence
+	POP(BP)
+	POP(LP)
+	RTN()
+
+StackBase: LONG(.+4)	| Pointer to bottom of stack
+	. = .+0x1000	| Reserve space for stack...

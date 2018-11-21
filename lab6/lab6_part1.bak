@@ -1,0 +1,26 @@
+.include "/home/dominic/Documents/school/50002/nominal.jsim"
+.include "/home/dominic/Documents/school/50002/stdcell.jsim"
+.include "/home/dominic/Documents/school/50002/lab6pc.jsim"
+
+
+.subckt FA a b ci s co
+X_first_Sum a b 5 xor2
+X_Sum 5 ci s xor2
+XfirstNand a b 1 nand2
+XsecondNand a ci 2 nand2
+XthirdNand b ci 3 nand2
+XfinalNand 1 2 3 co nand3
+.ends
+
+// PC + 4
+.subckt pc clk reset ia[31:0]
+// 32 bit adder with one input wired to constant 4, in binary 100
+// two zero bits
+X_2lsb ia[1:0] 0#2 0#2 sum[1:0] co[1:0] FA
+X_1_1bit ia[2] vdd co[1] sum[2] co[2] FA
+X_29_remaining_bits ia[31:3] 0#29 co[30:2] sum[31:3] co[31:3] FA
+
+Xreset reset#32 sum[31:0] 0#32 d[31:0] mux2
+Xreg d[31:0] clk ia[31:0] dreg
+
+.ends
