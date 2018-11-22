@@ -23,6 +23,6 @@ POP(LP)
 JMP(LP)
 
 StackBase: LONG(.+4)
-	. = .+0x100  | allocate some size, 100 bytes of stack
+	. = .+0x00  | size of stack
 
 	CMOVE(4, R1)
