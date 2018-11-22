@@ -1,0 +1,119 @@
+.include /home/dominic/Documents/school/50002/beta.uasm
+.include /home/dominic/Documents/school/50002/lab5checkoff.uasm
+
+count_bull_cows: | your subroutine must have this name
+  PUSH(LP) | standard subroutine entry sequence
+  PUSH(BP)
+  MOVE(SP, BP)
+
+
+  PUSH(R1) | bulls;   PUSH any registers (besides R0) used by your code …
+  PUSH(R2) | cows
+  PUSH(R3) | i
+  PUSH(R4) | j
+  PUSH(R5) | btemp
+  PUSH(R6) | atry
+  PUSH(R7) | btry
+  PUSH(R8) | mask
+  PUSH(R9) | a
+  PUSH(R10) | b
+  PUSH(R11) | temp reg; compare values
+  PUSH(R12) | temp reg; 
+  PUSH(R13) | temp reg; 
+
+  LD(BP,-12,R9)   | load 1st arg into a
+  LD(BP,-16,R10)   | load 2nd arg into b
+
+  CMOVE(0,R1)   | let bulls=0
+  CMOVE(0xF,R8)   | let mask=0xF
+  CMOVE(0,R3)   | let i=0
+  BR(checkfor1)   | unconditional branch
+
+for1:
+  AND(R9,R8,R12)  | a & mask; store in R12
+  AND(R10,R8,R13) | b & mask; store in R13
+  CMPEQ(R12,R13,R11) | (a & mask) == (b & mask); store in R11
+  BF(R11,forif1)  | if false, branch to end of if
+  ADDC(R1,1,R1)  | bulls = bulls + 1
+  OR(R9,R8,R9)  | a = a | mask
+  OR(R10,R8,R10)  | b = b | mask
+
+forif1:
+  SHLC(R8,4,R8)  | mask = mask << 4
+  ADDC(R3,1,R3)  | i ++ 
+
+checkfor1:
+  CMPLTC(R3,4,R11) | if i<4; store value in R11
+  BT(R11,for1)   | if i<4; branch to for1; if not, carry on
+
+
+  CMOVE(0,R2)   | cows = 0; initialisation before 2nd for
+  CMOVE(0,R3)   | i=0; initialisation before 2nd for
+  BR(checkfor2)   | unconditional branch
+
+for2:
+  ANDC(R9,0xF,R6)   | atry = a & 0xF
+  SRAC(R9,4,R9)   | a = a >> 4 
+  CMPEQC(R6,0xF,R12) | atry == 0xF; store value into R12
+  BT(R12,forif2)   | if atry == 0xF; go to forif2
+  MOVE(R10,R5)   | btemp = b
+  CMOVE(0xF,R8)    | mask=0xF
+  CMOVE(0,R4)   | j = 0
+  BR(checkfor3) | unconditional branch to check condition
+
+
+for3:
+  ANDC(R5,0xF,R7)  | btry = btemp & 0xF
+  SRAC(R5,4,R5)  | btemp = btemp >> 4 
+  CMPEQ(R7,R6,R12) | btry == atry
+  BF(R12,forif3)  | if btry != atry, branch to forif3
+  ADDC(R2,1,R2)  | cows = cows + 1
+  OR(R10,R8,R10)  | b = b | mask
+  BR(forif2)  | break to test for next for2 loop
+
+forif3:
+  SHLC(R8,4,R8)  | mask=mask<<4
+  ADDC(R4,1,R4)  | j ++ 
+
+
+checkfor3:
+  CMPLTC(R4,4,R11) | if j<4; store value into R11
+  BT(R11,for3)   | if j<4; branch to for3
+
+
+forif2:
+  ADDC(R3,1,R3)  | i ++ 
+
+
+checkfor2:
+  CMPLTC(R3,4,R11) | if i<4; store value in R11
+  BT(R11,for2)   | if i<4; branch to for2; if not, carry on
+
+  SHLC(R1,4,R0)   | bulls << 4; save in R0
+  ADD(R0,R2,R0)   | R0 += cows ; for return value
+
+  
+  POP(R13)
+  POP(R12)
+  POP(R11)
+  POP(R10)
+  POP(R9)
+  POP(R8)
+  POP(R7)
+  POP(R6)
+  POP(R5)
+  POP(R4)
+  POP(R3)
+  POP(R2)
+  POP(R1)
+  
+
+
+  MOVE(BP,SP) | standard subroutine exit sequence
+  POP(BP)
+  POP(LP)
+  RTN()
+
+StackBase: 
+  LONG(.+4) | Pointer to bottom of stack
+  . = .+0x1000 | Reserve space for stack...
