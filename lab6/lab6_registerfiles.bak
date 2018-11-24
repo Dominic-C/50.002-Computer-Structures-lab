@@ -1,0 +1,35 @@
+.include "/home/dominic/Documents/school/50002/nominal.jsim"
+.include "/home/dominic/Documents/school/50002/stdcell.jsim"
+.include "/home/dominic/Documents/school/50002/lab6regfile.jsim"
+
+// and5
+.subckt and5 a b c d e z
+Xfirstand a b c d output1 and4
+Xsecondand output1 e z and2 
+.ends
+
+
+// Register File
+.subckt regfile clk werf ra2sel ra[4:0] rb[4:0] rc[4:0]
++ wdata[31:0] radata[31:0] rbdata[31:0]
+
+Xregfile
++ vdd 0 0 ra[4:0] adata[31:0]     // A read port
++ vdd 0 0 ra2mux[4:0] bdata[31:0] // B read port
++ 0 clk werf rc[4:0] wdata[31:0]  // write port
++ $memory width=32 nlocations=31
+
+// check if ra is r31 i.e 11111
+XcheckRa ra[4] ra[3] ra[2] ra[1] ra[0] checkRa and5
+
+
+// select output of ra2sel
+Xra2selmux ra2sel#5 rb[4:0] rc[4:0] ra2mux[4:0] mux2
+// check if output at ra2 sel is r31 i.e 11111
+XcheckRa2selMux ra2mux[4] ra2mux[3] ra2mux[2] ra2mux[1] ra2mux[0] checkra2Mux and5
+
+// forcing data of registers to be 0 if register is r31
+Xrd1 checkRa#32 0#32 adata[31:0] radata[31:0] mux2
+Xrd2 checkRa2Mux#32 0#32 bdata[31:0] rbdata[31:0] mux2 
+
+.ends
