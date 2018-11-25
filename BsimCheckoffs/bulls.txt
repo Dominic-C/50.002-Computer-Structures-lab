@@ -1,0 +1,48 @@
+Legend
+R0 - return val
+R1 - bulls
+R2 - cows
+R3 - i
+R4 - j
+R5 - btemp
+R6 - atry
+R7 - btry
+R8 - mask
+R10 - a
+R11 - b
+
+PUSH(R11)
+PUSH(R10)
+PUSH(LP)
+PUSH(BP)
+
+// push also all the registers i have used
+
+CMOVE(0,R1) | bulls = 0
+CMOVE(15,R8) | mask = 0xF in hex = 15 in decimal
+
+// for loop
+CMOVE(0,R3) | i = 0
+BR(check)
+
+body:
+AND(R10,R8,R13) // a & mask -> result 1 (boolean)
+AND(R11,R8,R14) // b & mask -> result 2 (boolean)
+CMPEQ(result1, result2, R12) // result 1 & result 2
+BT(R12,internalCond1,R15)
+SHL(R8,4,R8) // mask = mask << 4
+BR(check)
+
+internalCond1:
+ADDC(R1,1,R1) // bulls += 1
+OR(R10,R8,R10) // a = a | mask
+OR(R11,R8,R11) // b = b | mask
+JMP(R15) // after if
+
+check:
+CMPLT(R3, 4, R9)
+BT(R9, body, R31)
+
+CMOVE(0,R2) // cows = 0
+
+

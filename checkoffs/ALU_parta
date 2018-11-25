@@ -4,8 +4,8 @@
 *.include"/home/dominic/Documents/school/50002/lab3compare.jsim"
 *.include"/home/dominic/Documents/school/50002/lab3boolean.jsim"
 *.include"/home/dominic/Documents/school/50002/lab3shifter.jsim"
-*.include"/home/dominic/Documents/school/50002/lab3checkoff_10.jsim"
-.include"/home/dominic/Documents/school/50002/lab3checkoff_6.jsim"
+.include"/home/dominic/Documents/school/50002/lab3checkoff_10.jsim"
+*.include"/home/dominic/Documents/school/50002/lab3checkoff_6.jsim"
 *.include"/home/dominic/Documents/school/50002/lab3multiply.jsim"
 ******************* 1 bit ADDER *************************
 .subckt FA a b ci s co
