@@ -1,0 +1,431 @@
+.include "/home/dominic/Documents/school/50002/nominal.jsim"
+.include "/home/dominic/Documents/school/50002/stdcell.jsim"
+.include "/home/dominic/Documents/school/50002/lab6basicblock.jsim"
+
+******************* 1 bit ADDER *************************
+.subckt FA a b ci s co
+X_first_Sum a b 5 xor2
+X_Sum 5 ci s xor2
+XfirstNand a b 1 nand2
+XsecondNand a ci 2 nand2
+XthirdNand b ci 3 nand2
+XfinalNand 1 2 3 co nand3
+.ends
+
+********************* Zero Flag **********************
+.subckt zeroFlag a[31:0] output
+// take 32 inputs, use 8 or4 gates to reduce them to 8 outputs
+X_firstLayer a[0:7] a[8:15] a[16:23] a[24:31] z[0:7] or4
+
+// have 8 outputs, reduce to 2 by using 2 or4 gates
+X_secondLayer z[0:1] z[2:3] z[4:5] z[6:7] w[0:1] or4
+
+X_finalValue w0 w1 output nor2
+.ends
+
+****************** Overflow Flag ******************
+.subckt overflowFlag a xb s z
+* invert necessary values
+XsInv s sInv inverter
+XaInv a aInv inverter
+XxbInv xb xbInv inverter
+* and3 gates
+Xand3_1 a xb sInv z1 and3
+Xand3_2 aInv xbInv s z2 and3
+X_output z1 z2 z or2
+.ends
+
+**********************32 bit Adder *******************
+.subckt adder32 ALUFN[0] A[31:0] B[31:0] s[31:0] z v n
+* adder *
+Xxor_32 B[31:0] ALUFN[0]#32 XB[31:0] xor2
+Xstart A[0] XB[0] ALUFN[0] s[0] cout[0] FA
+Xmiddle A[1:31] XB[1:31] cout[0:30] s[1:31] cout[1:31] FA
+
+* flags *
+X_ZeroFlag s[31:0] z zeroFlag // calling zero flag subckt
+X_overflowFlag a31 XB31 s31 v overflowFlag
+.connect s31 n // if a number is negative, it will be padded with 1's on the left
+.ends
+
+********************* 32 bit compare *****************
+.subckt compare32 ALUFN[2:1] z v n cmp[31:0]
+.connect cmp[31:1] 0 
+X_cmplt n v cmplt xor2
+X_cmplteq z cmplt cmplteq or2
+Xcmp ALUFN[2] ALUFN[1] 0 cmplt z cmplteq cmp[0] mux4
+.ends
+
+******************* 32 bit boolean ********************
+.subckt boole32 ALUFN[3:0] A[31:0] B[31:0] boole[31:0]
+X_bool A[31:0] B[31:0] ALUFN[0]#32 ALUFN[1]#32 ALUFN[2]#32 ALUFN[3]#32 boole[31:0] mux4
+.ends
+
+******************* 32 bit shifter **********************
+.subckt shift32 ALUFN[1:0] A[31:0] B[4:0] shift[31:0]
+
+// shift left
+X_leftshiftA B[4]#16 A[31:16] A[15:0] W[31:16] mux2
+X_leftshiftA_gnd B[4]#16 A[15:0] 0#16 W[15:0] mux2
+
+X_leftshiftW B[3]#24 W[31:8] W[23:0] X[31:8] mux2
+X_leftshiftW_gnd B[3]#8 W[7:0] 0#8 X[7:0] mux2
+
+X_leftshiftX B[2]#28 X[31:4] X[27:0] Y[31:4] mux2
+X_leftshiftX_gnd B[2]#4 X[3:0] 0#4 Y[3:0] mux2
+
+X_leftshiftY B[1]#30 Y[31:2] Y[29:0] Z[31:2] mux2
+X_leftshiftY_gnd B[1]#2 Y[1:0] 0#2 Z[1:0] mux2
+
+X_leftshiftZ B[0]#31 Z[31:1] Z[30:0] SL[31:1] mux2
+X_leftshiftZ_gnd B[0] Z[0] 0 SL[0] mux2
+
+// shift right and shift right with arithmetic
+* NOTE: in my implementation, i try to make SHR and SHA in the same chunk of code
+* USed a mux2 to switch between gnd and A31 when ALUFN[1] is 0 or 1
+
+X_arithmeticSelector ALUFN[1] 0 A[31] AS mux2 // Arithmetic Selector, AS is a made up name for a node
+
+X_rightshiftA_AS B[4]#16 A[31:16] AS#16 WR[31:16] mux2
+X_rightshiftA B[4]#16 A[15:0] A[31:16] WR[15:0] mux2
+
+X_rightshiftWR_AS B[3]#8 WR[31:24] AS#8 XR[31:24] mux2
+X_rightshiftWR B[3]#24 WR[23:0] WR[31:8] XR[23:0] mux2
+
+X_rightshiftXR_AS B[2]#4 XR[31:28] AS#4 YR[31:28] mux2
+X_rightshiftXR B[2]#28 XR[27:0] XR[31:4] YR[27:0] mux2
+
+X_rightshiftYR_AS B[1]#2 YR[31:30] AS#2 ZR[31:30] mux2
+X_rightshiftYR B[1]#30 YR[29:0] YR[31:2] ZR[29:0] mux2
+
+X_rightshiftZR_AS B[0] ZR[31] AS SR[31] mux2
+X_rightshiftZR B[0]#31 ZR[30:0] ZR[31:1] SR[30:0] mux2
+
+X_shifter ALUFN[0]#32 SL[31:0] SR[31:0] shift[31:0] mux2 
+.ends
+
+****************** 32 bit multiplier *****************************
+.subckt multiply32 A[31:0] B[31:0] P[31:0]
+X_and1 A[31:0] B[0]#32 Z1Z[31:0] and2
+.connect Z1Z[0] P[0]
+
+// after this line, code generated using a for loop in python
+X_and2 A[30:0] B[1]#31 Z2Z[30:0] and2
+X_FA_B1_F Z1Z[1] Z2Z[0] 0 P[1] C1out[0] FA
+X_FA_B1_L Z1Z[31:2] Z2Z[30:1] C1out[29:0] Z3Z[30:1] C1out[30:1] FA
+
+X_and3 A[29:0] B[2]#30 Z4Z[29:0] and2
+X_FA_B2_F Z3Z[1] Z4Z[0] 0 P[2] C2out[0] FA
+X_FA_B2_L Z3Z[30:2] Z4Z[29:1] C2out[28:0] Z5Z[29:1] C2out[29:1] FA
+
+X_and4 A[28:0] B[3]#29 Z6Z[28:0] and2
+X_FA_B3_F Z5Z[1] Z6Z[0] 0 P[3] C3out[0] FA
+X_FA_B3_L Z5Z[29:2] Z6Z[28:1] C3out[27:0] Z7Z[28:1] C3out[28:1] FA
+
+X_and5 A[27:0] B[4]#28 Z8Z[27:0] and2
+X_FA_B4_F Z7Z[1] Z8Z[0] 0 P[4] C4out[0] FA
+X_FA_B4_L Z7Z[28:2] Z8Z[27:1] C4out[26:0] Z9Z[27:1] C4out[27:1] FA
+
+X_and6 A[26:0] B[5]#27 Z10Z[26:0] and2
+X_FA_B5_F Z9Z[1] Z10Z[0] 0 P[5] C5out[0] FA
+X_FA_B5_L Z9Z[27:2] Z10Z[26:1] C5out[25:0] Z11Z[26:1] C5out[26:1] FA
+
+X_and7 A[25:0] B[6]#26 Z12Z[25:0] and2
+X_FA_B6_F Z11Z[1] Z12Z[0] 0 P[6] C6out[0] FA
+X_FA_B6_L Z11Z[26:2] Z12Z[25:1] C6out[24:0] Z13Z[25:1] C6out[25:1] FA
+
+X_and8 A[24:0] B[7]#25 Z14Z[24:0] and2
+X_FA_B7_F Z13Z[1] Z14Z[0] 0 P[7] C7out[0] FA
+X_FA_B7_L Z13Z[25:2] Z14Z[24:1] C7out[23:0] Z15Z[24:1] C7out[24:1] FA
+
+X_and9 A[23:0] B[8]#24 Z16Z[23:0] and2
+X_FA_B8_F Z15Z[1] Z16Z[0] 0 P[8] C8out[0] FA
+X_FA_B8_L Z15Z[24:2] Z16Z[23:1] C8out[22:0] Z17Z[23:1] C8out[23:1] FA
+
+X_and10 A[22:0] B[9]#23 Z18Z[22:0] and2
+X_FA_B9_F Z17Z[1] Z18Z[0] 0 P[9] C9out[0] FA
+X_FA_B9_L Z17Z[23:2] Z18Z[22:1] C9out[21:0] Z19Z[22:1] C9out[22:1] FA
+
+X_and11 A[21:0] B[10]#22 Z20Z[21:0] and2
+X_FA_B10_F Z19Z[1] Z20Z[0] 0 P[10] C10out[0] FA
+X_FA_B10_L Z19Z[22:2] Z20Z[21:1] C10out[20:0] Z21Z[21:1] C10out[21:1] FA
+
+X_and12 A[20:0] B[11]#21 Z22Z[20:0] and2
+X_FA_B11_F Z21Z[1] Z22Z[0] 0 P[11] C11out[0] FA
+X_FA_B11_L Z21Z[21:2] Z22Z[20:1] C11out[19:0] Z23Z[20:1] C11out[20:1] FA
+
+X_and13 A[19:0] B[12]#20 Z24Z[19:0] and2
+X_FA_B12_F Z23Z[1] Z24Z[0] 0 P[12] C12out[0] FA
+X_FA_B12_L Z23Z[20:2] Z24Z[19:1] C12out[18:0] Z25Z[19:1] C12out[19:1] FA
+
+X_and14 A[18:0] B[13]#19 Z26Z[18:0] and2
+X_FA_B13_F Z25Z[1] Z26Z[0] 0 P[13] C13out[0] FA
+X_FA_B13_L Z25Z[19:2] Z26Z[18:1] C13out[17:0] Z27Z[18:1] C13out[18:1] FA
+
+X_and15 A[17:0] B[14]#18 Z28Z[17:0] and2
+X_FA_B14_F Z27Z[1] Z28Z[0] 0 P[14] C14out[0] FA
+X_FA_B14_L Z27Z[18:2] Z28Z[17:1] C14out[16:0] Z29Z[17:1] C14out[17:1] FA
+
+X_and16 A[16:0] B[15]#17 Z30Z[16:0] and2
+X_FA_B15_F Z29Z[1] Z30Z[0] 0 P[15] C15out[0] FA
+X_FA_B15_L Z29Z[17:2] Z30Z[16:1] C15out[15:0] Z31Z[16:1] C15out[16:1] FA
+
+X_and17 A[15:0] B[16]#16 Z32Z[15:0] and2
+X_FA_B16_F Z31Z[1] Z32Z[0] 0 P[16] C16out[0] FA
+X_FA_B16_L Z31Z[16:2] Z32Z[15:1] C16out[14:0] Z33Z[15:1] C16out[15:1] FA
+
+X_and18 A[14:0] B[17]#15 Z34Z[14:0] and2
+X_FA_B17_F Z33Z[1] Z34Z[0] 0 P[17] C17out[0] FA
+X_FA_B17_L Z33Z[15:2] Z34Z[14:1] C17out[13:0] Z35Z[14:1] C17out[14:1] FA
+
+X_and19 A[13:0] B[18]#14 Z36Z[13:0] and2
+X_FA_B18_F Z35Z[1] Z36Z[0] 0 P[18] C18out[0] FA
+X_FA_B18_L Z35Z[14:2] Z36Z[13:1] C18out[12:0] Z37Z[13:1] C18out[13:1] FA
+
+X_and20 A[12:0] B[19]#13 Z38Z[12:0] and2
+X_FA_B19_F Z37Z[1] Z38Z[0] 0 P[19] C19out[0] FA
+X_FA_B19_L Z37Z[13:2] Z38Z[12:1] C19out[11:0] Z39Z[12:1] C19out[12:1] FA
+
+X_and21 A[11:0] B[20]#12 Z40Z[11:0] and2
+X_FA_B20_F Z39Z[1] Z40Z[0] 0 P[20] C20out[0] FA
+X_FA_B20_L Z39Z[12:2] Z40Z[11:1] C20out[10:0] Z41Z[11:1] C20out[11:1] FA
+
+X_and22 A[10:0] B[21]#11 Z42Z[10:0] and2
+X_FA_B21_F Z41Z[1] Z42Z[0] 0 P[21] C21out[0] FA
+X_FA_B21_L Z41Z[11:2] Z42Z[10:1] C21out[9:0] Z43Z[10:1] C21out[10:1] FA
+
+X_and23 A[9:0] B[22]#10 Z44Z[9:0] and2
+X_FA_B22_F Z43Z[1] Z44Z[0] 0 P[22] C22out[0] FA
+X_FA_B22_L Z43Z[10:2] Z44Z[9:1] C22out[8:0] Z45Z[9:1] C22out[9:1] FA
+
+X_and24 A[8:0] B[23]#9 Z46Z[8:0] and2
+X_FA_B23_F Z45Z[1] Z46Z[0] 0 P[23] C23out[0] FA
+X_FA_B23_L Z45Z[9:2] Z46Z[8:1] C23out[7:0] Z47Z[8:1] C23out[8:1] FA
+
+X_and25 A[7:0] B[24]#8 Z48Z[7:0] and2
+X_FA_B24_F Z47Z[1] Z48Z[0] 0 P[24] C24out[0] FA
+X_FA_B24_L Z47Z[8:2] Z48Z[7:1] C24out[6:0] Z49Z[7:1] C24out[7:1] FA
+
+X_and26 A[6:0] B[25]#7 Z50Z[6:0] and2
+X_FA_B25_F Z49Z[1] Z50Z[0] 0 P[25] C25out[0] FA
+X_FA_B25_L Z49Z[7:2] Z50Z[6:1] C25out[5:0] Z51Z[6:1] C25out[6:1] FA
+
+X_and27 A[5:0] B[26]#6 Z52Z[5:0] and2
+X_FA_B26_F Z51Z[1] Z52Z[0] 0 P[26] C26out[0] FA
+X_FA_B26_L Z51Z[6:2] Z52Z[5:1] C26out[4:0] Z53Z[5:1] C26out[5:1] FA
+
+X_and28 A[4:0] B[27]#5 Z54Z[4:0] and2
+X_FA_B27_F Z53Z[1] Z54Z[0] 0 P[27] C27out[0] FA
+X_FA_B27_L Z53Z[5:2] Z54Z[4:1] C27out[3:0] Z55Z[4:1] C27out[4:1] FA
+
+X_and29 A[3:0] B[28]#4 Z56Z[3:0] and2
+X_FA_B28_F Z55Z[1] Z56Z[0] 0 P[28] C28out[0] FA
+X_FA_B28_L Z55Z[4:2] Z56Z[3:1] C28out[2:0] Z57Z[3:1] C28out[3:1] FA
+
+X_and30 A[2:0] B[29]#3 Z58Z[2:0] and2
+X_FA_B29_F Z57Z[1] Z58Z[0] 0 P[29] C29out[0] FA
+X_FA_B29_L Z57Z[3:2] Z58Z[2:1] C29out[1:0] Z59Z[2:1] C29out[2:1] FA
+
+X_and31 A[1:0] B[30]#2 Z60Z[1:0] and2
+X_FA_B30_F Z59Z[1] Z60Z[0] 0 P[30] C30out[0] FA
+X_FA_B30_L Z59Z[2:2] Z60Z[1:1] C30out[0:0] Z61Z[1:1] C30out[1:1] FA
+
+X_and32 A[0:0] B[31]#1 Z62Z[0:0] and2
+X_FA_B31_F Z61Z[1] Z62Z[0] 0 P[31] C31out[0] FA
+
+.ends
+
+**************************** 32 bit ALU ****************************
+.subckt alu ALUFN[5:0] A[31:0] B[31:0] alu[31:0] z v n
+X_32bitAdder ALUFN[0] A[31:0] B[31:0] sum[31:0] z v n adder32
+X_32bitBoolean ALUFN[3:0] A[31:0] B[31:0] boole[31:0] boole32
+X_32bitShifter ALUFN[1:0] A[31:0] B[4:0] shift[31:0] shift32
+X_32bitCompare ALUFN[2:1] z v n cmp[31:0] compare32
+X_32bitMultiply A[31:0] B[31:0] mul[31:0] multiply32
+
+X_multiplyOrAdd ALUFN[1]#32 sum[31:0] mul[31:0] sumOrMul[31:0] mux2
+X_32bitALU ALUFN[5]#32 ALUFN[4]#32 sumOrMul[31:0] shift[31:0] boole[31:0] cmp[31:0] alu[31:0] mux4
+
+.ends
+
+
+************************** control logic *****************************
+.subckt ctl reset id[31:26] ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr
+
+
+
+// need LD, ST, ADD, SUB, CMPEQ, CMPLT, CMPLE, AND, OR, XOR, SHL, SHR, SRA,
+// ADDC, SUBC, CMPEQC, CMPLTC, CMPLEC,
+// ANDC, ORC, XORC, SHLC, SHRC, SRAC
+
+
+
+Xctl vdd 0 0 id[31:26]    // one read port
++ pcsel[2:0] wasel asel ra2sel bsel alufn[5:0] wdsel[1:0] werf moe xwr
++ $memory width=18 nlocations=64 contents=(
++ 0b000000000000000000 // opcode=0b000000
++ 0b000000000000000000 // opcode=0b000001
++ 0b000000000000000000 // opcode=0b000010
++ 0b000000000000000000 // opcode=0b000011
++ 0b000000000000000000 // opcode=0b000100
++ 0b000000000000000000 // opcode=0b000101
++ 0b000000000000000000 // opcode=0b000110
++ 0b000000000000000000 // opcode=0b000111
++ 0b000000000000000000 // opcode=0b001000
++ 0b000000000000000000 // opcode=0b001001
++ 0b000000000000000000 // opcode=0b001010
++ 0b000000000000000000 // opcode=0b001011
++ 0b000000000000000000 // opcode=0b001100
++ 0b000000000000000000 // opcode=0b001101
++ 0b000000000000000000 // opcode=0b001110
++ 0b000000000000000000 // opcode=0b001111
++ 0b000000000000000000 // opcode=0b010000
++ 0b000000000000000000 // opcode=0b010001
++ 0b000000000000000000 // opcode=0b010010
++ 0b000000000000000000 // opcode=0b010011
++ 0b000000000000000000 // opcode=0b010100
++ 0b000000000000000000 // opcode=0b010101
++ 0b000000000000000000 // opcode=0b010110
++ 0b000000000000000000 // opcode=0b010111
++ 0b000000100000010110 // opcode=0b011000 LD
++ 0b000001100000000001 // opcode=0b011001 ST
++ 0b000000000000000000 // opcode=0b011010
++ 0b000000000000000000 // opcode=0b011011 JMP
++ 0b000000000000000000 // opcode=0b011100
++ 0b000000000000000000 // opcode=0b011101 BEQ
++ 0b000000000000000000 // opcode=0b011110 BNE
++ 0b000000000000000000 // opcode=0b011111 LDR
++ 0b000000000000001100 // opcode=0b100000 ADD
++ 0b000000000000101100 // opcode=0b100001 SUB
++ 0b000000000000000000 // opcode=0b100010 MUL*
++ 0b000000000000000000 // opcode=0b100011 DIV*
++ 0b000000011001101100 // opcode=0b100100 CMPEQ
++ 0b000000011010101100 // opcode=0b100101 CMPLT
++ 0b000000011011101100 // opcode=0b100110 CMPLE
++ 0b000000000000000000 // opcode=0b100111
++ 0b000000001100001100 // opcode=0b101000 AND
++ 0b000000001111001100 // opcode=0b101001 OR
++ 0b000000001011001100 // opcode=0b101010 XOR
++ 0b000000000000000000 // opcode=0b101011
++ 0b000000010000001100 // opcode=0b101100 SHL
++ 0b000000010000101100 // opcode=0b101101 SHR
++ 0b000000010001101100 // opcode=0b101110 SHA
++ 0b000000000000000000 // opcode=0b101111 
++ 0b000000100000001100 // opcode=0b110000 ADDC
++ 0b000000100000101100 // opcode=0b110001 SUBC
++ 0b000000000000000000 // opcode=0b110010 MULC*
++ 0b000000000000000000 // opcode=0b110011 DIVC*
++ 0b000000111001101100 // opcode=0b110100 CMPEQC
++ 0b000000111010101100 // opcode=0b110101 CMPLTC
++ 0b000000111011101100 // opcode=0b110110 CMPLEC
++ 0b000000000000000000 // opcode=0b110111 
++ 0b000000101100001100 // opcode=0b111000 ANDC
++ 0b000000101111001100 // opcode=0b111001 ORC
++ 0b000000101011001100 // opcode=0b111010 XORC
++ 0b000000000000000000 // opcode=0b111011
++ 0b000000110000001100 // opcode=0b111100 SHLC
++ 0b000000110000101100 // opcode=0b111101 SHRC
++ 0b000000110001101100 // opcode=0b111110 SHARC
++ 0b000000000000000000 // opcode=0b111111
++ )
+Xxwr reset xwr 0 wr mux2
+.ends
+
+*********************** register file ***********************
+// and5
+.subckt and5 a b c d e z
+Xfirstand a b c d output1 and4
+Xsecondand output1 e z and2 
+.ends
+
+
+// Register File
+.subckt regfile clk werf ra2sel ra[4:0] rb[4:0] rc[4:0] wdata[31:0] radata[31:0] rbdata[31:0] wasel
+
+Xregfile
++ vdd 0 0 ra[4:0] adata[31:0]     // A read port
++ vdd 0 0 ra2mux[4:0] bdata[31:0] // B read port
++ 0 clk werf writePort[4:0] wdata[31:0]  // write port
++ $memory width=32 nlocations=31
+
+// check if ra is r31 i.e 11111
+XcheckRa ra[4] ra[3] ra[2] ra[1] ra[0] checkRa and5
+
+// wasel, select R30 11110
+Xwasel wasel#5 rc[4:0] vdd#4 0 writePort[4:0] mux2
+
+
+// select output of ra2sel
+Xra2selmux ra2sel#5 rb[4:0] rc[4:0] ra2mux[4:0] mux2
+// check if output at ra2 sel is r31 i.e 11111
+XcheckRa2selMux ra2mux[4] ra2mux[3] ra2mux[2] ra2mux[1] ra2mux[0] checkra2Mux and5
+
+// forcing data of registers to be 0 if register is r31
+Xrd1 checkRa#32 adata[31:0] 0#32 radata[31:0] mux2
+Xrd2 checkRa2Mux#32 bdata[31:0] 0#32 rbdata[31:0] mux2 
+
+.ends
+
+************** knex subckt (will use to connect two buses together) ***********
+.subckt knex a b
+.connect a b
+.ends
+
+
+************************* mux 5 **************************************
+.subckt mux5 s0 s1 s2 a b c d e out
+XfirstFour s0 s1 a b c d z mux4
+XnextTwo s2 z e mux2
+.ends
+
+************************ Program Counter ************************
+.subckt pc clk reset pcsel[2:0] xaddr[31:0] illop[31:0] jt[31:0] const[31:0] ia[31:0] plusconst[31:0] pcplusfour[31:0]
+
+// PC + 4
+X_2lsb ia[1:0] 0#2 0#2 pcplusfour[1:0] co[1:0] FA
+X_1_1bit ia[2] vdd co[1] pcplusfour[2] co[2] FA
+X_29_remaining_bits ia[31:3] 0#29 co[30:2] pcplusfour[31:3] co[31:3] FA
+
+// PC + 4 + (4*SXT(C))
+Xpcplusc2 pcplusfour[0] 0 0 plusconst[0] temp[0] FA
+Xpcplusc3 pcplusfour[1] 0 temp[0] plusconst[1] temp[1] FA
+Xpcplusc4 pcplusfour[31:2] c[29:0] temp[30:1] plusconst[31:2] temp[31:2] FA
+
+Xsetnewpc31 ia[31] jt[31] newpc31 and2
+
+Xpcselmux pcsel[0]#32 pcsel[1]#32 pcsel[2]#2 pcplusfour[31:0] newpc31 jt[30:0] plusconst[31:0] illop[31:0] xaddr[31:0] beforePC[31:0] mux5
+
+Xreset reset#32 beforePC[31:0] vdd 0#31 d[31:0] mux2 // set supervisior bit to 1
+Xreg d[31:0] clk#32 ia[31:0] dreg
+
+.ends
+
+
+************************** beta basic block **************************
+.subckt beta clk reset ia[31:0] id[31:0] ma[31:0] moe mrd[31:0] wr mwd[31:0]
+// ia is instruction address, id is instruction data.
+
+// Program counter
+XprogramCounter clk reset ia[31:0] pc
+
+// Register file
+// id format of [OPCODE | RC | RA | RB | unused]
+XregisterFile clk werf ra2sel id[20:16] id[15:11] id[25:21] wdata[31:0] radata[31:0] rbdata[31:0] regfile// need to edit this
+
+// CTL, takes in id[31:26] to generate control signals: ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr
+Xctl reset id[31:26] ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr ctl
+
+// if wr is 1, write data into memory at the end of cycle. data comes from readData port 2
+// connect rbdata to main memory mwd port
+XwriteToMemory rbdata[31:0] mwd[31:0] knex
+
+// BSEL mux
+Xbselmux bsel#32 rbdata[31:0] id[15]#16 id[15:0] outputbsel[31:0] mux2
+
+// ALU
+Xalu alufn[5:0] radata[31:0] outputbsel[31:0] ma[31:0] z v n alu
+
+// WDSEL MUX
+Xwdselmux wdsel[0]#32 wdsel[1]#32 0#32 ma[31:0] mrd[31:0] 0#32 wdata[31:0] mux4
+
+.ends
