@@ -339,8 +339,7 @@ Xsecondand output1 e z and2
 
 
 // Register File
-.subckt regfile clk werf ra2sel ra[4:0] rb[4:0] rc[4:0]
-+ wdata[31:0] radata[31:0] rbdata[31:0]
+.subckt regfile clk werf ra2sel ra[4:0] rb[4:0] rc[4:0] wdata[31:0] radata[31:0] rbdata[31:0]
 
 Xregfile
 + vdd 0 0 ra[4:0] adata[31:0]     // A read port
@@ -378,11 +377,37 @@ Xreg d[31:0] clk#32 ia[31:0] dreg
 
 .ends
 
+************** knex subckt (will use to connect two buses together) ***********
+.subckt knex a b
+.connect a b
+.ends
+
 
 ************************** beta basic block **************************
-.subckt beta clk reset ia[31:0] id[31:0] ma[31:0]
-+ moe mrd[31:0] wr mwd[31:0]
+.subckt beta clk reset ia[31:0] id[31:0] ma[31:0] moe mrd[31:0] wr mwd[31:0]
+// ia is instruction address, id is instruction data.
 
+// Program counter
+XprogramCounter clk reset ia[31:0] pc
 
+// Register file
+// id format of [OPCODE | RC | RA | RB | unused]
+XregisterFile clk werf ra2sel id[20:16] id[15:11] id[25:21] wdata[31:0] radata[31:0] rbdata[31:0] regfile// need to edit this
+
+// CTL, takes in id[31:26] to generate control signals: ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr
+Xctl reset id[31:26] ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr ctl
+
+// if wr is 1, write data into memory at the end of cycle. data comes from readData port 2
+// connect rbdata to main memory mwd port
+XwriteToMemory rbdata[31:0] mwd[31:0] knex
+
+// BSEL mux
+Xbselmux bsel#32 rb[31:0] id[15]#16 id[15:0] outputbsel[31:0] mux2
+
+// ALU
+Xalu alufn[5:0] radata[31:0] outputbsel[31:0] aluOut[31:0] z v n alu
+
+// WDSEL MUX
+Xwdselmux wdsel[1]#32 wdsel[0]#32 0#32 aluOut[31:0] mrd[31:0] 0#32 wdata[31:0] mux4
 
 .ends
