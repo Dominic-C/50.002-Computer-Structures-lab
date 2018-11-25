@@ -1,6 +1,6 @@
 .include "/home/dominic/Documents/school/50002/nominal.jsim"
 .include "/home/dominic/Documents/school/50002/stdcell.jsim"
-.include "/home/dominic/Documents/school/50002/lab6basicblock.jsim"
+.include "/home/dominic/Documents/school/50002/lab6checkoff.jsim"
 
 ******************* 1 bit ADDER *************************
 .subckt FA a b ci s co
@@ -248,9 +248,27 @@ X_32bitALU ALUFN[5]#32 ALUFN[4]#32 sumOrMul[31:0] shift[31:0] boole[31:0] cmp[31
 
 .ends
 
+************************ NOR 32 **************************************
+.subckt nor32 inputs[31:0] norOutput
+Xor1 inputs[0:3] z1 or4
+Xor2 inputs[4:7] z2 or4
+Xor3 inputs[8:11] z3 or4
+Xor4 inputs[12:15] z4 or4
+Xor5 inputs[16:19] z5 or4
+Xor6 inputs[20:23] z6 or4
+Xor7 inputs[24:27] z7 or4
+Xor8 inputs[28:31] z8 or4
+Xfirsthalf z1 z2 z3 z4 out1 or4
+Xsecondhalf z5 z6 z7 z8 out2 or4
+Xfinaloutput out1 out norOutput nor2
+.ends
+
+
+
 
 ************************** control logic *****************************
-.subckt ctl reset id[31:26] ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr
+.subckt ctl reset z id[31:26] ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr pcsel[2:0] wasel asel
+
 
 
 
@@ -261,74 +279,89 @@ X_32bitALU ALUFN[5]#32 ALUFN[4]#32 sumOrMul[31:0] shift[31:0] boole[31:0] cmp[31
 
 
 Xctl vdd 0 0 id[31:26]    // one read port
-+ pcsel[2:0] wasel asel ra2sel bsel alufn[5:0] wdsel[1:0] werf moe xwr
++ xpcsel[2:0] wasel asel ra2sel bsel alufn[5:0] wdsel[1:0] werf moe xwr
 + $memory width=18 nlocations=64 contents=(
-+ 0b000000000000000000 // opcode=0b000000
-+ 0b000000000000000000 // opcode=0b000001
-+ 0b000000000000000000 // opcode=0b000010
-+ 0b000000000000000000 // opcode=0b000011
-+ 0b000000000000000000 // opcode=0b000100
-+ 0b000000000000000000 // opcode=0b000101
-+ 0b000000000000000000 // opcode=0b000110
-+ 0b000000000000000000 // opcode=0b000111
-+ 0b000000000000000000 // opcode=0b001000
-+ 0b000000000000000000 // opcode=0b001001
-+ 0b000000000000000000 // opcode=0b001010
-+ 0b000000000000000000 // opcode=0b001011
-+ 0b000000000000000000 // opcode=0b001100
-+ 0b000000000000000000 // opcode=0b001101
-+ 0b000000000000000000 // opcode=0b001110
-+ 0b000000000000000000 // opcode=0b001111
-+ 0b000000000000000000 // opcode=0b010000
-+ 0b000000000000000000 // opcode=0b010001
-+ 0b000000000000000000 // opcode=0b010010
-+ 0b000000000000000000 // opcode=0b010011
-+ 0b000000000000000000 // opcode=0b010100
-+ 0b000000000000000000 // opcode=0b010101
-+ 0b000000000000000000 // opcode=0b010110
-+ 0b000000000000000000 // opcode=0b010111
-+ 0b000000100000010110 // opcode=0b011000 LD
-+ 0b000001100000000001 // opcode=0b011001 ST
-+ 0b000000000000000000 // opcode=0b011010
-+ 0b000000000000000000 // opcode=0b011011 JMP
-+ 0b000000000000000000 // opcode=0b011100
-+ 0b000000000000000000 // opcode=0b011101 BEQ
-+ 0b000000000000000000 // opcode=0b011110 BNE
-+ 0b000000000000000000 // opcode=0b011111 LDR
-+ 0b000000000000001100 // opcode=0b100000 ADD
-+ 0b000000000000101100 // opcode=0b100001 SUB
-+ 0b000000000000000000 // opcode=0b100010 MUL*
-+ 0b000000000000000000 // opcode=0b100011 DIV*
-+ 0b000000011001101100 // opcode=0b100100 CMPEQ
-+ 0b000000011010101100 // opcode=0b100101 CMPLT
-+ 0b000000011011101100 // opcode=0b100110 CMPLE
-+ 0b000000000000000000 // opcode=0b100111
-+ 0b000000001100001100 // opcode=0b101000 AND
-+ 0b000000001111001100 // opcode=0b101001 OR
-+ 0b000000001011001100 // opcode=0b101010 XOR
-+ 0b000000000000000000 // opcode=0b101011
-+ 0b000000010000001100 // opcode=0b101100 SHL
-+ 0b000000010000101100 // opcode=0b101101 SHR
-+ 0b000000010001101100 // opcode=0b101110 SHA
-+ 0b000000000000000000 // opcode=0b101111 
-+ 0b000000100000001100 // opcode=0b110000 ADDC
-+ 0b000000100000101100 // opcode=0b110001 SUBC
-+ 0b000000000000000000 // opcode=0b110010 MULC*
-+ 0b000000000000000000 // opcode=0b110011 DIVC*
-+ 0b000000111001101100 // opcode=0b110100 CMPEQC
-+ 0b000000111010101100 // opcode=0b110101 CMPLTC
-+ 0b000000111011101100 // opcode=0b110110 CMPLEC
-+ 0b000000000000000000 // opcode=0b110111 
-+ 0b000000101100001100 // opcode=0b111000 ANDC
-+ 0b000000101111001100 // opcode=0b111001 ORC
-+ 0b000000101011001100 // opcode=0b111010 XORC
-+ 0b000000000000000000 // opcode=0b111011
-+ 0b000000110000001100 // opcode=0b111100 SHLC
-+ 0b000000110000101100 // opcode=0b111101 SHRC
-+ 0b000000110001101100 // opcode=0b111110 SHARC
-+ 0b000000000000000000 // opcode=0b111111
++ 0b011100000000000100 // opcode=0b000000
++ 0b011100000000000100 // opcode=0b000001
++ 0b011100000000000100 // opcode=0b000010
++ 0b011100000000000100 // opcode=0b000011
++ 0b011100000000000100 // opcode=0b000100
++ 0b011100000000000100 // opcode=0b000101
++ 0b011100000000000100 // opcode=0b000110
++ 0b011100000000000100 // opcode=0b000111
++ 0b011100000000000100 // opcode=0b001000
++ 0b011100000000000100 // opcode=0b001001
++ 0b011100000000000100 // opcode=0b001010
++ 0b011100000000000100 // opcode=0b001011
++ 0b011100000000000100 // opcode=0b001100
++ 0b011100000000000100 // opcode=0b001101
++ 0b011100000000000100 // opcode=0b001110
++ 0b011100000000000100 // opcode=0b001111
++ 0b011100000000000100 // opcode=0b010000
++ 0b011100000000000100 // opcode=0b010001
++ 0b011100000000000100 // opcode=0b010010
++ 0b011100000000000100 // opcode=0b010011
++ 0b011100000000000100 // opcode=0b010100
++ 0b011100000000000100 // opcode=0b010101
++ 0b011100000000000100 // opcode=0b010110
++ 0b011100000000000100 // opcode=0b010111
++ 0b000000100000010110 // opcode=0b011000  LD
++ 0b000001100000000001 // opcode=0b011001  ST
++ 0b011100000000000100 // opcode=0b011010
++ 0b010000000000000100 // opcode=0b011011  JMP
++ 0b011100000000000100 // opcode=0b011100
++ 0b000000000000000100 // opcode=0b011101  BEQ
++ 0b000000000000000100 // opcode=0b011110  BNE
++ 0b000010001101010110 // opcode=0b011111  LDR
++ 0b000000000000001100 // opcode=0b100000  ADD
++ 0b000000000000101100 // opcode=0b100001  SUB
++ 0b011100000000000100 // opcode=0b100010
++ 0b011100000000000100 // opcode=0b100011
++ 0b000000011001101100 // opcode=0b100100  CMPEQ
++ 0b000000011010101100 // opcode=0b100101  CMPLT
++ 0b000000011011101100 // opcode=0b100110  CMPLE
++ 0b011100000000000100 // opcode=0b100111
++ 0b000000001100001100 // opcode=0b101000  AND
++ 0b000000001111001100 // opcode=0b101001  OR
++ 0b000000001011001100 // opcode=0b101010  XOR
++ 0b011100000000000100 // opcode=0b101011
++ 0b000000010000001100 // opcode=0b101100  SHL
++ 0b000000010000101100 // opcode=0b101101  SHR
++ 0b000000010001101100 // opcode=0b101110  SRA
++ 0b011100000000000100 // opcode=0b101111
++ 0b000000100000001100 // opcode=0b110000  ADDC
++ 0b000000100000101100 // opcode=0b110001  SUBC
++ 0b011100000000000100 // opcode=0b110010
++ 0b011100000000000100 // opcode=0b110011
++ 0b000000111001101100 // opcode=0b110100  CMPEQC
++ 0b000000111010101100 // opcode=0b110101  CMPLTC
++ 0b000000111011101100 // opcode=0b110110  CMPLEC
++ 0b011100000000000100 // opcode=0b110111
++ 0b000000101100001100 // opcode=0b111000  ANDC
++ 0b000000101111001100 // opcode=0b111001  ORC
++ 0b000000101011001100 // opcode=0b111010  XORC
++ 0b011100000000000100 // opcode=0b111011
++ 0b000000110000001100 // opcode=0b111100  SHLC
++ 0b000000110000101100 // opcode=0b111101  SHRC
++ 0b000000110001101100 // opcode=0b111110  SRAC
++ 0b011100000000000100 // opcode=0b111111
 + )
-Xxwr reset xwr 0 wr mux2
+
+// BNE and BEQ???
+// BEQ 011101
+// BNE 011110; pcsel will be 001 when we need to do a BEQ or BNE
+// BEQ
+XselectBEQ z#3 0#3 0#2 vdd beq[2:0] mux2
+XselectBNE z#3 0#2 vdd 0#3 bne[2:0] mux2
+Xselectpcsel id[26]#3 bne[2:0] beq[2:0] pcsel[2:0] mux2
+
+
+Xreset reset xwr 0 wr mux2
+.ends
+
+************** knex subckt (will use to connect two buses together) ***********
+.subckt knex a b
+.connect a b
 .ends
 
 *********************** register file ***********************
@@ -366,16 +399,13 @@ Xrd2 checkRa2Mux#32 bdata[31:0] 0#32 rbdata[31:0] mux2
 
 .ends
 
-************** knex subckt (will use to connect two buses together) ***********
-.subckt knex a b
-.connect a b
-.ends
+
 
 
 ************************* mux 5 **************************************
 .subckt mux5 s0 s1 s2 a b c d e out
-XfirstFour s0 s1 a b c d z mux4
-XnextTwo s2 z e mux2
+XfirstFour s0 s1 a b c d z2 mux4
+XnextTwo s2 z2 e out mux2
 .ends
 
 ************************ Program Counter ************************
@@ -387,13 +417,15 @@ X_1_1bit ia[2] vdd co[1] pcplusfour[2] co[2] FA
 X_29_remaining_bits ia[31:3] 0#29 co[30:2] pcplusfour[31:3] co[31:3] FA
 
 // PC + 4 + (4*SXT(C))
-Xpcplusc2 pcplusfour[0] 0 0 plusconst[0] temp[0] FA
-Xpcplusc3 pcplusfour[1] 0 temp[0] plusconst[1] temp[1] FA
-Xpcplusc4 pcplusfour[31:2] c[29:0] temp[30:1] plusconst[31:2] temp[31:2] FA
+Xpcplusconst 0#2 tempmultiple[1:0] knex
+Xpcplusconst2 const[15:0] tempmultiple[17:2] knex
+Xpcplusconst3 const[15]#14 tempmultiple[31:18] knex
+Xpcplusconst4 pcplusfour[0] tempmultiple[0] 0 plusconst[0] carryoutfirst[0] FA
+Xpcplusconst5 pcplusfour[31:1] tempmultiple[31:1] carryoutfirst[30:0] plusconst[31:1] carryoutfirst[31:1] FA 
 
 Xsetnewpc31 ia[31] jt[31] newpc31 and2
 
-Xpcselmux pcsel[0]#32 pcsel[1]#32 pcsel[2]#2 pcplusfour[31:0] newpc31 jt[30:0] plusconst[31:0] illop[31:0] xaddr[31:0] beforePC[31:0] mux5
+Xpcselmux pcsel[0]#32 pcsel[1]#32 pcsel[2]#32 pcplusfour[31:0] newpc31 jt[30:0] plusconst[31:0] illop[31:0] xaddr[31:0] beforePC[31:0] mux5
 
 Xreset reset#32 beforePC[31:0] vdd 0#31 d[31:0] mux2 // set supervisior bit to 1
 Xreg d[31:0] clk#32 ia[31:0] dreg
@@ -402,18 +434,43 @@ Xreg d[31:0] clk#32 ia[31:0] dreg
 
 
 ************************** beta basic block **************************
-.subckt beta clk reset ia[31:0] id[31:0] ma[31:0] moe mrd[31:0] wr mwd[31:0]
+.subckt beta clk reset irq ia[31:0] id[31:0] ma[31:0] moe mrd[31:0] wr mwd[31:0]
 // ia is instruction address, id is instruction data.
 
+// xaddr = 0x80000008
+Xxdr vdd 0#27 vdd 0#3 xaddr[31:0] buffer 
+// illop = 0x80000004
+Xillop vdd 0#28 vdd 0#2 illop[31:0] buffer
+// Z flag from register file
+Xzout radata[31:0] z nor32
+
+
 // Program counter
-XprogramCounter clk reset ia[31:0] pc
+XprogramCounter clk reset pcsel[2:0] xaddr[31:0] illop[31:0] radata[31:0] sxtc[31:0] ia[31:0] plusconst[31:0] pcplusfour[31:0] pc
 
 // Register file
 // id format of [OPCODE | RC | RA | RB | unused]
-XregisterFile clk werf ra2sel id[20:16] id[15:11] id[25:21] wdata[31:0] radata[31:0] rbdata[31:0] regfile// need to edit this
+XregisterFile clk werf ra2sel id[20:16] id[15:11] id[25:21] wdata[31:0] radata[31:0] rbdata[31:0] wasel regfile// need to edit this
 
 // CTL, takes in id[31:26] to generate control signals: ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr
-Xctl reset id[31:26] ra2sel bsel alufn[5:0] wdsel[1:0] werf moe wr ctl
+Xctlmod reset z id[31:26] ra2sel bsel alufn[5:0] xwdsel[1:0] xwerf moe xwr xpcsel[2:0] xwasel asel ctl
+
+
+// IRQ
+Xirq1 ia[31] pcMSB inverter
+Xirq2 irq pcMSB selector and2
+// selector bit is 1 when interrupt is requested.
+Xirq3 selector#3 xpcsel[2:0] vdd 0#2 pcsel[2:0] mux2 // when selector is high, we make PCSEL to output 4 (100)
+Xirq4 selector xwasel vdd wasel mux2 // wasel to 1 if irq is requested
+Xirq5 selector xwerf vdd werf mux2 // werf to 1 if irq is requested
+Xirq6 selector#2 xwdsel[1:0] 0#2 wdsel[1:0] mux2 // wdsel to 00 when irq is requested, else normal values
+Xirq7 selector xwr 0 wr mux2 // wr to 0 if irq requested
+
+// sxt c
+XsignextendC id[15]#16 sxtc[31:16] knex
+XsignextendC2 id[15:0] sxtc[15:0] knex
+
+
 
 // if wr is 1, write data into memory at the end of cycle. data comes from readData port 2
 // connect rbdata to main memory mwd port
@@ -422,10 +479,13 @@ XwriteToMemory rbdata[31:0] mwd[31:0] knex
 // BSEL mux
 Xbselmux bsel#32 rbdata[31:0] id[15]#16 id[15:0] outputbsel[31:0] mux2
 
-// ALU
-Xalu alufn[5:0] radata[31:0] outputbsel[31:0] ma[31:0] z v n alu
 
 // WDSEL MUX
 Xwdselmux wdsel[0]#32 wdsel[1]#32 0#32 ma[31:0] mrd[31:0] 0#32 wdata[31:0] mux4
+
+Xaselmux asel#32 radata[31:0] 0 plusconst[30:0] outputasel[31:0] mux2
+
+// ALU
+Xalu alufn[5:0] outputasel[31:0] outputbsel[31:0] ma[31:0] z1 v1 n1 alu
 
 .ends

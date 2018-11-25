@@ -336,17 +336,16 @@ Xctl vdd 0 0 id[31:26] // one read port
 + )
 
 // BNE and BEQ: pcsel signals are determined using the "Z" signal
-Xnot id[31] hold1 inverter
-Xand hold1 id[30] id[29] id[28] hold2 and4
-Xor id[27] id[26] hold3 xor2
-Xnor id[26] z hold4 xnor2
-Xout hold2 hold3 hold4 vdd branch and4
-Xpcsel branch#3 xpcsel[2:0] 0#2 vdd pcsel[2:0] mux2
+//Xnot id[31] hold1 inverter
+//Xand hold1 id[30] id[29] id[28] hold2 and4
+//Xor id[27] id[26] hold3 xor2
+//Xnor id[26] z hold4 xnor2
+//Xout hold2 hold3 hold4 vdd branch and4
+//Xpcsel branch#3 xpcsel[2:0] 0#2 vdd pcsel[2:0] mux2
 
-// why doesnt this work?
-//XselectBEQ z#3 0#3 xpcsel[2:0] beq[2:0] mux2
-//XselectBNE z#3 xpcsel[2:0] 0#3 bne[2:0] mux2
-//Xselectpcsel id[26]#3 bne[2:0] beq[2:0] pcsel[2:0] mux2
+XselectBEQ z#3 0#3 xpcsel[2:0] beq[2:0] mux2
+XselectBNE z#3 xpcsel[2:0] 0#3 bne[2:0] mux2
+Xselectpcsel id[26]#3 bne[2:0] beq[2:0] pcsel[2:0] mux2
 
 Xreset reset xwr 0 wr mux2   // forces WR to 0 when RESET = 1
 .ends
