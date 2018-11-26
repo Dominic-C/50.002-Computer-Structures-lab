@@ -334,19 +334,20 @@ Xctl vdd 0 0 id[31:26] // one read port
 + 0b000000110001101100 // opcode=0b111110  SRAC
 + 0b011100000000000100 // opcode=0b111111
 + )
+// BEQ has opcode 011101, BNE has opcode 011110
+// we want to check if the first 4 bits of opcode is 0111. to check if the first bit is 0, we invert it.
+Xcheckmsb id[31] invertedMSB inverter
+// now that we inverted bit 31, we do an and 4 to check if all 4 bits are 1111
+XcheckfirstFourbits invertedMSB id[30] id[29] id[28] firstfourbits and4
+// check if 5th and 6th bits of opcode are not 00 or 11
+XchecktwoLSB id[27] id[26] twoLSB xor2
+// z must be 1 and opcode must be BEQ OR z must be 0 and opcode must be BNE to branch
+XcheckifBEQorBNE z id[26] isbneOrbeq xnor2 // outputs 1 if z is 1 and bit 27 of id is 0, or if z is 0 and bit 27 of id is 1
 
-// BNE and BEQ: pcsel signals are determined using the "Z" signal
-Xnot id[31] hold1 inverter
-Xand hold1 id[30] id[29] id[28] hold2 and4
-Xor id[27] id[26] hold3 xor2
-Xnor id[26] z hold4 xnor2
-Xout hold2 hold3 hold4 vdd branch and4
+// check that all conditions are met
+XchecktoBranch vdd isbneOrbeq firstfourbits twoLSB branch and4
 Xpcsel branch#3 xpcsel[2:0] 0#2 vdd pcsel[2:0] mux2
 
-// why doesnt this work?
-//XselectBEQ z#3 0#3 xpcsel[2:0] beq[2:0] mux2
-//XselectBNE z#3 xpcsel[2:0] 0#3 bne[2:0] mux2
-//Xselectpcsel id[26]#3 bne[2:0] beq[2:0] pcsel[2:0] mux2
 
 Xreset reset xwr 0 wr mux2   // forces WR to 0 when RESET = 1
 .ends
@@ -424,8 +425,8 @@ Xreg d[31:0] clk#32 ia[31:0] dreg                 // standard closing seq for re
 ************************** beta basic block **************************
 .subckt beta clk reset irq ia[31:0] id[31:0] ma[31:0] moe mrd[31:0] wr mwd[31:0]
 
-Xxdr vdd 0#27 vdd 0#3 xaddr[31:0] buffer     // Mem[0x80000008] = BR(interrupt_handler)
-Xillop vdd 0#28 vdd 0#2 illop[31:0] buffer  // Mem[0x80000004] = BR(illop_handler)
+Xxdr vdd 0#27 vdd 0#3 xaddr[31:0] buffer    
+Xillop vdd 0#28 vdd 0#2 illop[31:0] buffer
 
 XrbdataToMainMem rbdata[31:0] mwd[31:0] knex // connect rbdata to main memory via rbdata bus and mwd bus
 XsignExtendC1 id[15]#16 SEXTC[31:16] knex // sign extension of C

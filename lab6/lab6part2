@@ -347,13 +347,16 @@ Xctl vdd 0 0 id[31:26]    // one read port
 + 0b011100000000000100 // opcode=0b111111
 + )
 
-// BNE and BEQ???
-// BEQ 011101
-// BNE 011110; pcsel will be 001 when we need to do a BEQ or BNE
-// BEQ
-XselectBEQ z#3 0#3 0#2 vdd beq[2:0] mux2
-XselectBNE z#3 0#2 vdd 0#3 bne[2:0] mux2
-Xselectpcsel id[26]#3 bne[2:0] beq[2:0] pcsel[2:0] mux2
+// BEQ has opcode 011101, BNE has opcode 011110
+// we want to check if the first 4 bits of opcode is 0111. to check if the first bit is 0, we invert it.
+Xcheckmsb id[31] invertedMSB inverter
+// now that we inverted bit 31, we do an and 4 to check if all 4 bits are 1111
+XcheckfirstFourbits id[31] id[30:28] firstfourbits and4
+// check if 5th and 6th bits of opcode are not 00 or 11
+XchecktwoLSB id[27:26] twoLSB xor2
+// z must be 1 and opcode must be BEQ OR z must be 0 and opcode must be BNE to branch
+XcheckifBEQorBNE z id[27] branch xor2 // outputs 1 if z is 1 and bit 27 of id is 0, or if z is 0 and bit 27 of id is 1
+Xpcsel branch#3 xpcsel[2:0] 0#2 vdd pcsel[2:0] mux2
 
 
 Xreset reset xwr 0 wr mux2
